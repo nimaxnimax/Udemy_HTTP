@@ -681,6 +681,73 @@ This Nginx configuration file sets up Nginx to serve HTTP requests. It defines a
       - /etc/localtime:/etc/localtime:ro
 ```
 
+**Complete Docker Compose YAML File >> Setting Up WordPress with MySQL Database, Redis Cache, and Nginx Proxy:**
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: your_mysql_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: your_wordpress_password
+
+  redis:
+    image: redis:latest
+    restart: always
+    entrypoint: redis-server --appendonly yes --requirepass your-redis-password-here --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379"
+    volumes:
+      - redis_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  wordpress:
+    depends_on:
+      - db
+      - redis
+    image: wordpress:latest
+    ports:
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: your_wordpress_password
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        /* Redis configuration */
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', '6379');
+        define('WP_REDIS_PASSWORD', 'your-redis-password-here');
+        define('WP_CACHE_KEY_SALT', 'your-unique-salt-here');
+        define('WP_CACHE', true);
+      REDIS_HOST: redis
+    volumes:
+      - wp_content:/var/www/html/wp-content     
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - wordpress
+
+volumes:
+  db_data:
+  wp_content:
+  redis_data:
+  
+```
 
 **Configuring Nginx Proxy for WordPress:**
 
