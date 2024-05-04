@@ -666,6 +666,21 @@ http {
 
 This Nginx configuration file sets up Nginx to serve HTTP requests. It defines a `server` block listening on port 80 for the domain `domain.local`. Requests to this domain are proxied to the WordPress service running on port 80 within the Docker network. The `proxy_set_header` directives are used to forward the original client IP address, protocol, and other headers to the WordPress container.
 
+**Redis Docker Compose Configuration:**
+
+```yaml
+  redis:
+    image: redis:latest
+    restart: always
+    entrypoint: redis-server --appendonly yes --requirepass your-redis-password-here --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379"
+    volumes:
+      - redis1_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+```
+
 
 **Configuring Nginx Proxy for WordPress:**
 
